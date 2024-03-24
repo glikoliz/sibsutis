@@ -1,0 +1,11 @@
+(defvar L '(0 1 3 4 0 1 0 5 -2 0 4 0))
+(defun count_ones_zeroes (lst)
+  (cond
+    ((null lst) 0)
+    ((= (car lst) 1) (+ 1 (count_ones_zeroes (cdr lst))))
+    ((= (car lst) 0) (- (count_ones_zeroes (cdr lst)) 1))
+    (t (count_ones_zeroes (cdr lst)))))
+(defun start (lst)
+  (abs (count_ones_zeroes lst))
+)
+(print (start L))
