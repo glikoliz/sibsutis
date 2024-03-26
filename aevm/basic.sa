@@ -1,0 +1,7 @@
+00 REM Это комментарий
+01 INPUT A
+02 INPUT B
+03 LET C = (A - B) * A
+04 IF C < 0 GOTO 01
+05 PRINT C
+06 END
