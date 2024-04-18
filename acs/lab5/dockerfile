@@ -1,0 +1,49 @@
+# Use a base image with a Linux distribution of your choice
+FROM ubuntu:22.04
+
+# Install necessary dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential wget openssh-client openssh-server && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download and install Slurm
+WORKDIR /tmp/slurm
+RUN wget https://download.schedmd.com/slurm/slurm-20.02.7.tar.bz2 && \
+    tar xvjf slurm-20.02.7.tar.bz2 && \
+    cd slurm-20.02.7 && \
+    ./configure && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/slurm
+
+# Download and install OpenMPI
+WORKDIR /tmp/openmpi
+RUN wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz && \
+    tar xvzf openmpi-4.1.1.tar.gz && \
+    cd openmpi-4.1.1 && \
+    ./configure --enable-orterun-prefix-by-default && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/openmpi
+
+# Create a non-root user for MPI applications
+RUN useradd -m -s /bin/bash mpiuser
+
+# Set environment variables for OpenMPI
+ENV PATH="/usr/local/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
+
+# Configure SSH for passwordless login
+RUN mkdir /var/run/sshd
+RUN echo "mpiuser:password" | chpasswd
+RUN echo "mpiuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# Expose the SSH port
+EXPOSE 22
+
+# Start SSH
+CMD ["/usr/sbin/sshd", "-D"]

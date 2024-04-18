@@ -1,0 +1,26 @@
+FROM ubuntu:22.04
+
+# Установка необходимых пакетов
+RUN apt-get update && \
+    apt-get install -y slurm-wlm munge munge-common supervisor && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Создание пользователя slurm
+RUN useradd -r -m -U -d /var/lib/slurm -s /bin/false slurm
+
+# Настройка прав для slurm
+RUN chown slurm:slurm /var/lib/slurm
+
+# Создание директории для Slurm state
+RUN mkdir -p /var/lib/slurm/slurmctld
+
+# Копирование конфигурационных файлов Slurm
+COPY slurm.conf /etc/slurm/slurm.conf
+COPY slurmdbd.conf /etc/slurm/slurmdbd.conf
+
+# Копирование конфигурационных файлов Supervisor
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Запуск supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
